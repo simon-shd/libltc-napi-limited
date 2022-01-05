@@ -111,7 +111,7 @@ const libltc = require('libltc-napi-limited');
 
 function main() {
     const decoder = new libltc();
-    console.log(decoder.decodeStream("rawAudio.raw"));
+    console.log(decoder.decodeFile("rawAudio.raw"));
 }
 ```
 

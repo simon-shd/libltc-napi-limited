@@ -78,7 +78,7 @@ Napi::Value LibltcNapiLimited::DecodeFile(const Napi::CallbackInfo &info)
     fclose(f);
     ltc_decoder_free(decoder);
 
-    return Napi::String::New(env, "whee");
+    return Napi::String::New(env, "File Decoded?");
 }
 
 Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
@@ -143,10 +143,13 @@ Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
 
 Napi::Function LibltcNapiLimited::GetClass(Napi::Env env)
 {
-    return DefineClass(env, "LibltcNapiLimited", {
-                                                     LibltcNapiLimited::InstanceMethod("decodeFile", &LibltcNapiLimited::DecodeFile),
-                                                     LibltcNapiLimited::InstanceMethod("decodeStream", &LibltcNapiLimited::DecodeStream),
-                                                 });
+    return DefineClass(
+        env,
+        "LibltcNapiLimited",
+        {
+            LibltcNapiLimited::InstanceMethod("decodeFile", &LibltcNapiLimited::DecodeFile),
+            LibltcNapiLimited::InstanceMethod("decodeStream", &LibltcNapiLimited::DecodeStream),
+        });
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)

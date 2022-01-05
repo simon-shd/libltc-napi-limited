@@ -4,7 +4,8 @@
     "node-addon-api": "^1.1.0"
   },
   "scripts": {
-    "test": "node --napi-modules ./test/test_binding.js",
+    "test-file": "node --napi-modules ./test/test_file.js",
+    "test-stream": "node --napi-modules ./test/test_stream.js",
     "install": "node-gyp rebuild"
   },
   "gypfile": true,
