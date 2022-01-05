@@ -12,7 +12,7 @@
   "version": "0.1.0",
   "description": "an implementation of libltc in Node using node-addon-api",
   "author": "Simon Harding",
-  "license": "ISC",
+  "license": "LGPL-3.0-or-later",
   "devDependencies": {
     "naudiodon": "^2.3.6"
   },
