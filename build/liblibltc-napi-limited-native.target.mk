@@ -110,11 +110,11 @@ INCS_Release := \
 
 OBJS := \
 	$(obj).target/$(TARGET)/src/libltc_napi_limited.o \
-	$(obj).target/$(TARGET)/src/ltc.o \
-	$(obj).target/$(TARGET)/src/decoder.o \
-	$(obj).target/$(TARGET)/src/encoder.o \
-	$(obj).target/$(TARGET)/src/timecode.o \
-	$(obj).target/$(TARGET)/src/ltcdecode.o
+	$(obj).target/$(TARGET)/src/libltc/ltc.o \
+	$(obj).target/$(TARGET)/src/libltc/decoder.o \
+	$(obj).target/$(TARGET)/src/libltc/encoder.o \
+	$(obj).target/$(TARGET)/src/libltc/timecode.o \
+	$(obj).target/$(TARGET)/src/libltc/ltcdecode.o
 
 # Add to the list of files we specially track dependencies for.
 all_deps += $(OBJS)
@@ -132,25 +132,25 @@ $(OBJS): GYP_OBJCXXFLAGS := $(DEFS_$(BUILDTYPE)) $(INCS_$(BUILDTYPE))  $(CFLAGS_
 
 # Suffix rules, putting all outputs into $(obj).
 
-$(obj).$(TOOLSET)/$(TARGET)/%.o: $(srcdir)/%.c FORCE_DO_CMD
-	@$(call do_cmd,cc,1)
-
 $(obj).$(TOOLSET)/$(TARGET)/%.o: $(srcdir)/%.cc FORCE_DO_CMD
 	@$(call do_cmd,cxx,1)
 
-# Try building from generated source, too.
-
-$(obj).$(TOOLSET)/$(TARGET)/%.o: $(obj).$(TOOLSET)/%.c FORCE_DO_CMD
+$(obj).$(TOOLSET)/$(TARGET)/%.o: $(srcdir)/%.c FORCE_DO_CMD
 	@$(call do_cmd,cc,1)
+
+# Try building from generated source, too.
 
 $(obj).$(TOOLSET)/$(TARGET)/%.o: $(obj).$(TOOLSET)/%.cc FORCE_DO_CMD
 	@$(call do_cmd,cxx,1)
 
-$(obj).$(TOOLSET)/$(TARGET)/%.o: $(obj)/%.c FORCE_DO_CMD
+$(obj).$(TOOLSET)/$(TARGET)/%.o: $(obj).$(TOOLSET)/%.c FORCE_DO_CMD
 	@$(call do_cmd,cc,1)
 
 $(obj).$(TOOLSET)/$(TARGET)/%.o: $(obj)/%.cc FORCE_DO_CMD
 	@$(call do_cmd,cxx,1)
+
+$(obj).$(TOOLSET)/$(TARGET)/%.o: $(obj)/%.c FORCE_DO_CMD
+	@$(call do_cmd,cc,1)
 
 # End of this set of suffix rules
 ### Rules for final target.

@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <math.h>
-#include <ltc.h>
+#include "libltc/ltc.h"
 
 #define BUFFER_SIZE (1024)
 
@@ -94,11 +94,11 @@ Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
 
     // instantiate an unsigned char array of the size of the buffer
     // note ltcsnd_sample_t is a libltc type for audio data
-    // this char array contains audio values
+    // this char array will contain audio values from stream
     ltcsnd_sample_t sound[buffer_size];
 
     // now we have to convert the pointer data from a char (seems to come in
-    // signed), back to a 1D char array so libltc can process it. If node-addon-api
+    // signed), back to an unsigned char array so libltc can process it. If node-addon-api
     // allowed us to cast to an unsigned char, that would be great - but since
     // it doesn't we have to do it manually
     int a;
@@ -124,22 +124,6 @@ Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
         SMPTETimecode stime;
 
         ltc_frame_to_time(&stime, &frame.ltc, 1);
-
-        // printf("%04d-%02d-%02d %s ",
-        //        ((stime.years < 67) ? 2000 + stime.years : 1900 + stime.years),
-        //        stime.months,
-        //        stime.days,
-        //        stime.timezone);
-
-        // printf("%02d:%02d:%02d%c%02d | %8lld %8lld%s\n",
-        //        stime.hours,
-        //        stime.mins,
-        //        stime.secs,
-        //        (frame.ltc.dfbit) ? '.' : ':',
-        //        stime.frame,
-        //        frame.off_start,
-        //        frame.off_end,
-        //        frame.reverse ? "  R" : "");
 
         char tc_str[11];
         sprintf(tc_str, "%02d:%02d:%02d%c%02d",
