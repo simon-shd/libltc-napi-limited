@@ -1,0 +1,175 @@
+#include "libltc_napi_limited.h"
+
+#include <stdio.h>
+#include <math.h>
+#include <ltc.h>
+
+#define BUFFER_SIZE (1024)
+
+using namespace Napi;
+
+LibltcNapiLimited::LibltcNapiLimited(const Napi::CallbackInfo &info) : ObjectWrap(info)
+{
+    Napi::Env env = info.Env();
+}
+
+Napi::Value LibltcNapiLimited::DecodeFile(const Napi::CallbackInfo &info)
+{
+    Napi::Env env = info.Env();
+
+    // Napi::String filename = info[0].As<Napi::String>();
+
+    int apv = 1920;
+    ltcsnd_sample_t sound[BUFFER_SIZE];
+    size_t n;
+    long int total;
+    FILE *f;
+    const char *filename = info[0].As<Napi::String>().Utf8Value().c_str();
+
+    LTCDecoder *decoder;
+    LTCFrameExt frame;
+
+    f = fopen(filename, "r");
+
+    printf("Filename is %s\n", filename);
+
+    if (!f)
+    {
+        fprintf(stderr, "error opening '%s'\n", filename);
+    }
+    fprintf(stderr, "* reading from: %s\n", filename);
+
+    total = 0;
+
+    decoder = ltc_decoder_create(apv, 32);
+
+    do
+    {
+        n = fread(sound, sizeof(ltcsnd_sample_t), BUFFER_SIZE, f);
+        ltc_decoder_write(decoder, sound, n, total);
+
+        while (ltc_decoder_read(decoder, &frame))
+        {
+            SMPTETimecode stime;
+
+            ltc_frame_to_time(&stime, &frame.ltc, 1);
+
+            printf("%04d-%02d-%02d %s ",
+                   ((stime.years < 67) ? 2000 + stime.years : 1900 + stime.years),
+                   stime.months,
+                   stime.days,
+                   stime.timezone);
+
+            printf("%02d:%02d:%02d%c%02d | %8lld %8lld%s\n",
+                   stime.hours,
+                   stime.mins,
+                   stime.secs,
+                   (frame.ltc.dfbit) ? '.' : ':',
+                   stime.frame,
+                   frame.off_start,
+                   frame.off_end,
+                   frame.reverse ? "  R" : "");
+        }
+
+        total += n;
+
+    } while (n);
+
+    fclose(f);
+    ltc_decoder_free(decoder);
+
+    return Napi::String::New(env, "whee");
+}
+
+Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
+{
+    Napi::Env env = info.Env();
+
+    // interpret the first argument as a NodeJS Buffer, cast it to a char, and
+    // then use the node-addon-api method Data() to get a pointer to the data
+    char *stream = info[0].As<Napi::Buffer<char>>().Data();
+
+    // use the node-addon-api method Length() to get the length of the buffer
+    int buffer_size = info[0].As<Napi::Buffer<char>>().Length();
+
+    // instantiate an unsigned char array of the size of the buffer
+    // note ltcsnd_sample_t is a libltc type for audio data
+    // this char array contains audio values
+    ltcsnd_sample_t sound[buffer_size];
+
+    // now we have to convert the pointer data from a char (seems to come in
+    // signed), back to a 1D char array so libltc can process it. If node-addon-api
+    // allowed us to cast to an unsigned char, that would be great - but since
+    // it doesn't we have to do it manually
+    int a;
+    for (a = 0; a < buffer_size; a++)
+    {
+        sound[a] = static_cast<unsigned char>(*stream); // this is a C++ cast from signed to unsigned
+        stream++;                                       // this moves the pointer forward by one byte (the size of its type, char)
+    }
+
+    int apv = 1920;
+
+    LTCDecoder *decoder;
+    LTCFrameExt frame;
+
+    decoder = ltc_decoder_create(apv, 32);
+    ltc_decoder_write(decoder, sound, buffer_size, 0);
+
+    Napi::Array timecode_queue = Napi::Array::New(env);
+    uint32_t i = 0;
+
+    while (ltc_decoder_read(decoder, &frame))
+    {
+        SMPTETimecode stime;
+
+        ltc_frame_to_time(&stime, &frame.ltc, 1);
+
+        // printf("%04d-%02d-%02d %s ",
+        //        ((stime.years < 67) ? 2000 + stime.years : 1900 + stime.years),
+        //        stime.months,
+        //        stime.days,
+        //        stime.timezone);
+
+        // printf("%02d:%02d:%02d%c%02d | %8lld %8lld%s\n",
+        //        stime.hours,
+        //        stime.mins,
+        //        stime.secs,
+        //        (frame.ltc.dfbit) ? '.' : ':',
+        //        stime.frame,
+        //        frame.off_start,
+        //        frame.off_end,
+        //        frame.reverse ? "  R" : "");
+
+        char tc_str[11];
+        sprintf(tc_str, "%02d:%02d:%02d%c%02d",
+                stime.hours,
+                stime.mins,
+                stime.secs,
+                (frame.ltc.dfbit) ? '.' : ':',
+                stime.frame);
+
+        timecode_queue[i++] = Napi::String::New(env, tc_str);
+    }
+
+    ltc_decoder_free(decoder);
+
+    return timecode_queue;
+}
+
+Napi::Function LibltcNapiLimited::GetClass(Napi::Env env)
+{
+    return DefineClass(env, "LibltcNapiLimited", {
+                                                     LibltcNapiLimited::InstanceMethod("decodeFile", &LibltcNapiLimited::DecodeFile),
+                                                     LibltcNapiLimited::InstanceMethod("decodeStream", &LibltcNapiLimited::DecodeStream),
+                                                 });
+}
+
+Napi::Object Init(Napi::Env env, Napi::Object exports)
+{
+    Napi::String name = Napi::String::New(env, "LibltcNapiLimited");
+    exports.Set(name, LibltcNapiLimited::GetClass(env));
+    return exports;
+}
+
+NODE_API_MODULE(addon, Init)

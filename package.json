@@ -1,0 +1,18 @@
+{
+  "main": "lib/binding.js",
+  "dependencies": {
+    "node-addon-api": "^1.1.0"
+  },
+  "scripts": {
+    "test": "node --napi-modules ./test/test_binding.js"
+  },
+  "gypfile": true,
+  "name": "libltc-napi-limited",
+  "version": "0.1.0",
+  "description": "an implementation of libltc in Node using node-addon-api",
+  "author": "Simon Harding",
+  "license": "ISC",
+  "devDependencies": {
+    "naudiodon": "^2.3.6"
+  }
+}
