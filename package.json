@@ -21,5 +21,13 @@
   "directories": {
     "lib": "lib",
     "test": "test"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/simon-shd/libltc-napi-limited.git"
+  },
+  "bugs": {
+    "url": "https://github.com/simon-shd/libltc-napi-limited/issues"
+  },
+  "homepage": "https://github.com/simon-shd/libltc-napi-limited#readme"
 }
