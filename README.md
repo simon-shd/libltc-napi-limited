@@ -3,7 +3,7 @@
 
 # <a name="project-name"></a>Libltc NAPI (Limited)
 
-> libltc-napi-limited is a limited (decode-only) implementation of the libltc C library in NodeJS, using node-addon-api. It can decode a raw audio file, or an audio stream.
+> libltc-napi-limited is a limited (decode-only) implementation of the libltc C library in NodeJS, using node-addon-api. It can decode a raw audio file or an audio stream.
 
 (from the Libltc website):
 
@@ -12,6 +12,7 @@ audio signal. The audio signal is commonly recorded on a VTR track or other stor
 
 The libltc C library provides functionality to encode and decode LTC from/to timecode, including SMPTE date support.
 
+**This module is experimental and somewhat unstable - it should not be used in a production environment without doing your own due diligence on whether it will work for you**
 
 ## Prerequisites
 
@@ -73,6 +74,8 @@ Once the module is `install` ed, it will compile/build the native add-on for you
 
 `decodeStream` expects an audio buffer in (from a Stream, such as the `naudiodon` module outputs), and returns an array of timecode strings. The size of the array will vary depending on the length of the buffer that is input. 
 
+Note that it returns the results of the conversion (from audio buffer to timecode string) after the full buffer is converted - i.e. the first timecode string in the array will be delayed by at least array.length frames of LTC.
+
 ```js
 const libltc = require('libltc-napi-limited');
 const portAudio = require('naudiodon');
@@ -103,7 +106,7 @@ function main() {
 
 ### decodeFile
 
-`decodeFile` decodes a given file, assuming it's raw audio (not WAV, or any other format).
+`decodeFile` decodes a given file (to standard output), assuming it's raw audio (not WAV, or any other format).
 
 
 ```js
@@ -115,9 +118,33 @@ function main() {
 }
 ```
 
+### as a Stream
+
+When instatiated, `libltc-napi-limited` returns a NodeJS [Transform Stream](https://nodejs.org/api/stream.html#duplex-and-transform-streams). Audio can then be `pipe`d into the Stream, and it will output timecode, which can be picked up via the usual methods for reading a Stream.
+
+There are additional methods available when running as a Stream:
+
+#### getFPS
+
+`getFps` returns the frames-per-second of the LTC being decoded. For the first second, it will return 0 (while fps is being determined).
+
+#### isDropFrame
+
+`isDropFrame` returns true if the decoded timecode is drop-frame, false if not.
+
+#### setJumpFrames
+
+`libltc-napi-limited` decodes LTC from audio with some latency. `setJumpFrames` allows you to jump forward a certain numebr of frames to offset this latency. You cannot jump forward more than 1s.
+
 ## Testing
 
-To test LTC streaming, I used [Qlab](https://qlab.app/) to send LTC to an audio loopback device ([BlackHole](https://existential.audio/blackhole/)), then used this test to pull audio from the loopback device.
+There are three testing files:
+
+- `test_file.js` - this tests file conversion
+- `test_pipe.js` - this tests incoming audio using `libltc-napi-limited` as a Stream
+- `test_stream.js` - this tests decoding incoming audio using `decodeStream()`
+
+To test LTC streaming, I used [Qlab](https://qlab.app/) to send LTC to an audio loopback device ([BlackHole](https://existential.audio/blackhole/)), then pulled audio from the loopback device using the Node module `naudiodon`.
 
 * [Qlab](https://qlab.app/)
 * [BlackHole](https://existential.audio/blackhole/)
@@ -133,7 +160,7 @@ Note that when decoding from a stream, libltc doesn't return data until the curr
 
 Things I'd like to do:
 
-* [todo] expose the decodeStream functionality as a Stream, so an audio stream can be `pipe`d into it, and it `emit`s data as timecode whenever a frame is decoded.
+* [todo] make the C/C++ backend persistent, so LTC frames are not lost at the edges of audio data chunks. Currently, frames are lost or repeated every 5-6 frames
 * [todo] more error correction
 
 ## Credits
@@ -150,6 +177,6 @@ Things I'd like to do:
 
 ## License
 
-Since libltc is released under the LGPLv3 license, I believe this module must be released under the same license, even though no modifications were made to the underlying libltc code. I think any software created using this module doesn't have to be LGPLv3, since the module can be replaced by the end user. (but I'm not a legal scholar, so read up on the licenses and make your own conclusions).
+Since libltc is released under the LGPLv3 license, I believe this module must be released under the same license, even though no modifications were made to the underlying libltc code. I think any software created using this module doesn't have to be LGPLv3, since the module can be replaced by the end user. **I'm not a legal expert, so read up on the licenses and make your own conclusions.**
 
 [LGPLv3 License](http://www.gnu.org/licenses/lgpl-3.0.txt)
