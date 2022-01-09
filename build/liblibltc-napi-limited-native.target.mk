@@ -112,7 +112,6 @@ OBJS := \
 	$(obj).target/$(TARGET)/src/libltc_napi_limited.o \
 	$(obj).target/$(TARGET)/src/libltc/ltc.o \
 	$(obj).target/$(TARGET)/src/libltc/decoder.o \
-	$(obj).target/$(TARGET)/src/libltc/encoder.o \
 	$(obj).target/$(TARGET)/src/libltc/timecode.o \
 	$(obj).target/$(TARGET)/src/libltc/ltcdecode.o
 

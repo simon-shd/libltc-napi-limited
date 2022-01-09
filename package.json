@@ -6,6 +6,7 @@
   "scripts": {
     "test-file": "node --napi-modules ./test/test_file.js",
     "test-stream": "node --napi-modules ./test/test_stream.js",
+    "test-pipe": "node --napi-modules ./test/test_pipe.js",
     "install": "node-gyp rebuild"
   },
   "gypfile": true,

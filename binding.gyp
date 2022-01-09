@@ -5,7 +5,6 @@
             'src/libltc_napi_limited.cc',
             'src/libltc/ltc.c',
             'src/libltc/decoder.c',
-            'src/libltc/encoder.c',
             'src/libltc/timecode.c',
             'src/libltc/ltcdecode.c',
         ],

@@ -8,9 +8,9 @@ public:
     LibltcNapiLimited(const Napi::CallbackInfo&);
     Napi::Value DecodeFile(const Napi::CallbackInfo&);
     Napi::Value DecodeStream(const Napi::CallbackInfo&);
+    Napi::Value DecodeChunk(const Napi::CallbackInfo&);
 
     static Napi::Function GetClass(Napi::Env);
 
 private:
-    std::string _greeterName;
 };

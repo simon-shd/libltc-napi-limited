@@ -141,6 +141,75 @@ Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
     return timecode_queue;
 }
 
+Napi::Value LibltcNapiLimited::DecodeChunk(const Napi::CallbackInfo &info)
+{
+    Napi::Env env = info.Env();
+
+    // interpret the first argument as a NodeJS Buffer, cast it to a char, and
+    // then use the node-addon-api method Data() to get a pointer to the data
+    char *stream = info[0].As<Napi::Buffer<char>>().Data();
+
+    // use the node-addon-api method Length() to get the length of the buffer
+    int buffer_size = info[0].As<Napi::Buffer<char>>().Length();
+
+    // get the callback function that will push decoded values into the Stream
+    Napi::Function cb = info[1].As<Napi::Function>();
+
+    // instantiate an unsigned char array of the size of the buffer
+    // note ltcsnd_sample_t is a libltc type for audio data
+    // this char array will contain audio values from stream
+    ltcsnd_sample_t sound[buffer_size];
+
+    // now we have to convert the pointer data from a char (seems to come in
+    // signed), back to an unsigned char array so libltc can process it. If node-addon-api
+    // allowed us to cast to an unsigned char, that would be great - but since
+    // it doesn't we have to do it manually
+    int a;
+    for (a = 0; a < buffer_size; a++)
+    {
+        sound[a] = static_cast<unsigned char>(*stream); // this is a C++ cast from signed to unsigned
+        stream++;                                       // this moves the pointer forward by one byte (the size of its type, char)
+    }
+
+    // this is audio samples-per-video frames, which can generally be calculated
+    // as [audio sample rate] / [framerate]. The default from libltc's implementation
+    // seems to be 48000Hz / 25fps = 1920. I changed it to 44100 / 30 = 1470. Libltc
+    // calculates on the fly, so it doesn't really matter much.
+    int apv = 1470;
+
+    LTCDecoder *decoder;
+    LTCFrameExt frame;
+
+    decoder = ltc_decoder_create(apv, 32);
+    ltc_decoder_write(decoder, sound, buffer_size/sizeof(ltcsnd_sample_t), 0);
+
+    while (ltc_decoder_read(decoder, &frame))
+    {
+        SMPTETimecode stime;
+
+        ltc_frame_to_time(&stime, &frame.ltc, 1);
+
+        char tc_str[11];
+        sprintf(tc_str, "%02d:%02d:%02d%c%02d",
+                stime.hours,
+                stime.mins,
+                stime.secs,
+                (frame.ltc.dfbit) ? '.' : ':',
+                stime.frame);
+
+        cb.Call(env.Global(), {Napi::String::New(env, tc_str)});
+    }
+
+    ltc_decoder_free(decoder);
+
+    // the function returns an Object with a boolean property of "dropFrame", whether 
+    // the TC is drop frame or not.
+    Napi::Object return_opt = Napi::Object::New(env);
+    return_opt.Set(Napi::String::New(env, "dropFrame"), (frame.ltc.dfbit));
+
+    return return_opt;
+}
+
 Napi::Function LibltcNapiLimited::GetClass(Napi::Env env)
 {
     return DefineClass(
@@ -149,6 +218,7 @@ Napi::Function LibltcNapiLimited::GetClass(Napi::Env env)
         {
             LibltcNapiLimited::InstanceMethod("decodeFile", &LibltcNapiLimited::DecodeFile),
             LibltcNapiLimited::InstanceMethod("decodeStream", &LibltcNapiLimited::DecodeStream),
+            LibltcNapiLimited::InstanceMethod("decodeChunk", &LibltcNapiLimited::DecodeChunk),
         });
 }
 
