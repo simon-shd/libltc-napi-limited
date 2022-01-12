@@ -7,7 +7,7 @@ const assert = require("assert");
 // Qlab: https://qlab.app/
 // BlackHole: https://existential.audio/blackhole/
 
-const DEVICE_ID = 8; // this is the address for the loopback device
+const DEVICE_ID = 1; // this is the address for the loopback device
 
 assert(LibltcNapiLimited, "The expected module is undefined");
 

@@ -1,6 +1,6 @@
 {
     'targets': [{
-        'target_name': 'liblibltc-napi-limited-native',
+        'target_name': 'node-libltc-limited-native',
         'sources': [
             'src/libltc_napi_limited.cc',
             'src/libltc/ltc.c',
