@@ -4,6 +4,10 @@
 #include <math.h>
 #include "libltc/ltc.h"
 
+#ifdef _WIN32
+#include <fcntl.h> // for _fmode
+#endif
+
 #define BUFFER_SIZE (1024)
 
 using namespace Napi;
@@ -28,6 +32,12 @@ Napi::Value LibltcNapiLimited::DecodeFile(const Napi::CallbackInfo &info)
 
     LTCDecoder *decoder;
     LTCFrameExt frame;
+
+#ifdef _WIN32
+    // see https://msdn.microsoft.com/en-us/library/ktss1a9b.aspx and
+    // https://github.com/x42/libltc/issues/18
+    _set_fmode(_O_BINARY);
+#endif
 
     f = fopen(filename, "r");
 
@@ -95,7 +105,7 @@ Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
     // instantiate an unsigned char array of the size of the buffer
     // note ltcsnd_sample_t is a libltc type for audio data
     // this char array will contain audio values from stream
-    ltcsnd_sample_t sound[buffer_size];
+    ltcsnd_sample_t *sound = new ltcsnd_sample_t[buffer_size];
 
     // now we have to convert the pointer data from a char (seems to come in
     // signed), back to an unsigned char array so libltc can process it. If node-addon-api
@@ -107,8 +117,9 @@ Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
         sound[a] = static_cast<unsigned char>(*stream); // this is a C++ cast from signed to unsigned
         stream++;                                       // this moves the pointer forward by one byte (the size of its type, char)
     }
+    printf("sound[0]: %d\n",sound[0]);
 
-    int apv = 1920;
+    int apv = 1470;
 
     LTCDecoder *decoder;
     LTCFrameExt frame;
@@ -122,6 +133,7 @@ Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
     while (ltc_decoder_read(decoder, &frame))
     {
         SMPTETimecode stime;
+        printf("got into while");
 
         ltc_frame_to_time(&stime, &frame.ltc, 1);
 
@@ -158,7 +170,7 @@ Napi::Value LibltcNapiLimited::DecodeChunk(const Napi::CallbackInfo &info)
     // instantiate an unsigned char array of the size of the buffer
     // note ltcsnd_sample_t is a libltc type for audio data
     // this char array will contain audio values from stream
-    ltcsnd_sample_t sound[buffer_size];
+    ltcsnd_sample_t *sound = new ltcsnd_sample_t[buffer_size];
 
     // now we have to convert the pointer data from a char (seems to come in
     // signed), back to an unsigned char array so libltc can process it. If node-addon-api
@@ -181,7 +193,7 @@ Napi::Value LibltcNapiLimited::DecodeChunk(const Napi::CallbackInfo &info)
     LTCFrameExt frame;
 
     decoder = ltc_decoder_create(apv, 32);
-    ltc_decoder_write(decoder, sound, buffer_size/sizeof(ltcsnd_sample_t), 0);
+    ltc_decoder_write(decoder, sound, buffer_size / sizeof(ltcsnd_sample_t), 0);
 
     while (ltc_decoder_read(decoder, &frame))
     {
@@ -202,7 +214,7 @@ Napi::Value LibltcNapiLimited::DecodeChunk(const Napi::CallbackInfo &info)
 
     ltc_decoder_free(decoder);
 
-    // the function returns an Object with a boolean property of "dropFrame", whether 
+    // the function returns an Object with a boolean property of "dropFrame", whether
     // the TC is drop frame or not.
     Napi::Object return_opt = Napi::Object::New(env);
     return_opt.Set(Napi::String::New(env, "dropFrame"), (frame.ltc.dfbit));
