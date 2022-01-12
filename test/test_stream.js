@@ -7,7 +7,7 @@ const assert = require("assert");
 // Qlab: https://qlab.app/
 // BlackHole: https://existential.audio/blackhole/
 
-const DEVICE_ID = 1; // this is the address for the loopback device
+const DEVICE_ID = 8; // this is the address for the loopback device
 
 assert(LibltcNapiLimited, "The expected module is undefined");
 
@@ -17,7 +17,7 @@ function testBasic() {
     var ai = new portAudio.AudioIO({
         inOptions: {
             channelCount: 1,
-            sampleFormat: portAudio.SampleFormat16Bit,
+            sampleFormat: portAudio.SampleFormat8Bit,
             sampleRate: 44100,
             deviceId: DEVICE_ID,
             closeOnError: true // Close the stream if an audio error is detected, if set false then just log the error
@@ -26,7 +26,6 @@ function testBasic() {
 
     let result_queue, i;
     ai.on('data', buf => {
-        console.dir(buf[0]);
         result_queue = instance.decodeStream(buf);
         
         for (i=0; i<result_queue.length; i++)

@@ -117,7 +117,6 @@ Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
         sound[a] = static_cast<unsigned char>(*stream); // this is a C++ cast from signed to unsigned
         stream++;                                       // this moves the pointer forward by one byte (the size of its type, char)
     }
-    printf("sound[0]: %d\n",sound[0]);
 
     int apv = 1470;
 
@@ -133,7 +132,6 @@ Napi::Value LibltcNapiLimited::DecodeStream(const Napi::CallbackInfo &info)
     while (ltc_decoder_read(decoder, &frame))
     {
         SMPTETimecode stime;
-        printf("got into while");
 
         ltc_frame_to_time(&stime, &frame.ltc, 1);
 
