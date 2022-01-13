@@ -11,7 +11,7 @@
   },
   "gypfile": true,
   "name": "@simon-shd/libltc-napi-limited",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "an implementation of libltc in Node using node-addon-api",
   "author": "Simon Harding",
   "license": "LGPL-3.0-or-later",
