@@ -7,7 +7,7 @@ const assert = require("assert");
 // Qlab: https://qlab.app/
 // BlackHole: https://existential.audio/blackhole/
 
-const DEVICE_ID = 8; // this is the address for the loopback device
+const DEVICE_ID = 1; // this is the address for the loopback device
 
 assert(LibltcNapiLimited, "The expected module is undefined");
 
@@ -20,11 +20,11 @@ function testBasic() {
             sampleFormat: portAudio.SampleFormat8Bit,
             sampleRate: 44100,
             deviceId: DEVICE_ID,
-            closeOnError: true // Close the stream if an audio error is detected, if set false then just log the error
+            closeOnError: false // Close the stream if an audio error is detected, if set false then just log the error
         }
     });
 
-    instance.setJumpFrames(4);
+    instance.setJumpFrames(7);
 
     instance.on('data', buf => {
         console.log(buf.toString());

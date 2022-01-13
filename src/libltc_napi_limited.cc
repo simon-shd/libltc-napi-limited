@@ -15,6 +15,14 @@ using namespace Napi;
 LibltcNapiLimited::LibltcNapiLimited(const Napi::CallbackInfo &info) : ObjectWrap(info)
 {
     Napi::Env env = info.Env();
+
+    // this is audio samples-per-video frames, which can generally be calculated
+    // as [audio sample rate] / [framerate]. The default from libltc's implementation
+    // seems to be 48000Hz / 25fps = 1920. I changed it to 44100 / 30 = 1470. Libltc
+    // calculates on the fly, so it doesn't really matter much.
+    int apv = 1470;
+
+    this->_decoder = ltc_decoder_create(apv, 32);
 }
 
 Napi::Value LibltcNapiLimited::DecodeFile(const Napi::CallbackInfo &info)
@@ -181,19 +189,11 @@ Napi::Value LibltcNapiLimited::DecodeChunk(const Napi::CallbackInfo &info)
         stream++;                                       // this moves the pointer forward by one byte (the size of its type, char)
     }
 
-    // this is audio samples-per-video frames, which can generally be calculated
-    // as [audio sample rate] / [framerate]. The default from libltc's implementation
-    // seems to be 48000Hz / 25fps = 1920. I changed it to 44100 / 30 = 1470. Libltc
-    // calculates on the fly, so it doesn't really matter much.
-    int apv = 1470;
-
-    LTCDecoder *decoder;
     LTCFrameExt frame;
 
-    decoder = ltc_decoder_create(apv, 32);
-    ltc_decoder_write(decoder, sound, buffer_size / sizeof(ltcsnd_sample_t), 0);
+    ltc_decoder_write(this->_decoder, sound, buffer_size / sizeof(ltcsnd_sample_t), 0);
 
-    while (ltc_decoder_read(decoder, &frame))
+    while (ltc_decoder_read(this->_decoder, &frame))
     {
         SMPTETimecode stime;
 
@@ -210,14 +210,17 @@ Napi::Value LibltcNapiLimited::DecodeChunk(const Napi::CallbackInfo &info)
         cb.Call(env.Global(), {Napi::String::New(env, tc_str)});
     }
 
-    ltc_decoder_free(decoder);
-
     // the function returns an Object with a boolean property of "dropFrame", whether
     // the TC is drop frame or not.
     Napi::Object return_opt = Napi::Object::New(env);
     return_opt.Set(Napi::String::New(env, "dropFrame"), (frame.ltc.dfbit));
 
     return return_opt;
+}
+
+void LibltcNapiLimited::FreeDecoder(const Napi::CallbackInfo &info)
+{
+    ltc_decoder_free(this->_decoder);
 }
 
 Napi::Function LibltcNapiLimited::GetClass(Napi::Env env)
@@ -229,6 +232,7 @@ Napi::Function LibltcNapiLimited::GetClass(Napi::Env env)
             LibltcNapiLimited::InstanceMethod("decodeFile", &LibltcNapiLimited::DecodeFile),
             LibltcNapiLimited::InstanceMethod("decodeStream", &LibltcNapiLimited::DecodeStream),
             LibltcNapiLimited::InstanceMethod("decodeChunk", &LibltcNapiLimited::DecodeChunk),
+            LibltcNapiLimited::InstanceMethod("freeDecoder", &LibltcNapiLimited::FreeDecoder),
         });
 }
 
