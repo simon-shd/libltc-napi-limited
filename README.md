@@ -28,6 +28,7 @@ v8.16.0
 ```
 Since the project makes use of a C/C++ library, you also need tools to compile C code. See the [Node-API Resources](https://nodejs.github.io/node-addon-examples/getting-started/tools) help files and tutorials for the prerequisites for your system, and for help installing them.
 
+This project has been tested on MacOS (12.1) and Windows 10.
 
 ## Table of contents
 
@@ -39,6 +40,11 @@ Since the project makes use of a C/C++ library, you also need tools to compile C
   - [Usage](#usage)
     - [decodeStream](#decodeStream)
     - [decodeFile](#decodeFile)
+    - [as a Stream](#as-a-Stream)
+      - [getFPS](#getFPS)
+      - [isDropFrame](#isDropFrame)
+      - [setJumpFrames]($setJumpFrames)
+  - [Testing](#Testing)
   - [Contributing](#contributing)
   - [Credits](#credits)
   - [Built With](#built-with)
@@ -144,11 +150,12 @@ There are three testing files:
 - `test_pipe.js` - this tests incoming audio using `libltc-napi-limited` as a Stream
 - `test_stream.js` - this tests decoding incoming audio using `decodeStream()`
 
-To test LTC streaming, I used [Qlab](https://qlab.app/) to send LTC to an audio loopback device ([BlackHole](https://existential.audio/blackhole/)), then pulled audio from the loopback device using the Node module `naudiodon`.
+To test LTC streaming in MacOS, I used [Qlab](https://qlab.app/) to send LTC to an audio loopback device ([BlackHole](https://existential.audio/blackhole/)), then pulled audio from the loopback device using the Node module `naudiodon`.
 
 * [Qlab](https://qlab.app/)
 * [BlackHole](https://existential.audio/blackhole/)
 
+To test LTC streaming in Windows 10, I used [Audacity](https://www.audacityteam.org/) to send LTC audio from a timecode audio file to an audio loopback driver ([VB-CABLE](https://vb-audio.com/Cable/index.htm)), and pulled audio from the device using `naudiodon`. Note the output volume on Audacity had to be about 15% to avoid clipping - this will depend on the LTC audio file you use.
 
 ## <a name="contributing"></a>Contributing, Support, and Further development
 
@@ -160,7 +167,6 @@ Note that when decoding from a stream, libltc doesn't return data until the curr
 
 Things I'd like to do:
 
-* [todo] make the C/C++ backend persistent, so LTC frames are not lost at the edges of audio data chunks. Currently, frames are lost or repeated every 5-6 frames
 * [todo] more error correction
 
 ## Credits
