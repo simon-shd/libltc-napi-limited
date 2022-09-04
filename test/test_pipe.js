@@ -20,6 +20,7 @@ function testBasic() {
             sampleFormat: portAudio.SampleFormat8Bit,
             sampleRate: 44100,
             deviceId: DEVICE_ID,
+            highwaterMark: 1 * 8 * 512, // channelCount * sampleFormat * 512 frames per buffer?
             closeOnError: true // Close the stream if an audio error is detected, if set false then just log the error
         }
     });
